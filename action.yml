@@ -10,12 +10,20 @@ runs:
 
 inputs:
   commit_message:
-    required: true
-    description: The commit message
+    required: false
+    description: >
+      The commit message (required unless commits is provided).
+      Supports template variables: {{date}}, {{datetime}}, {{sha}}, {{sha:short}},
+      {{branch}}, {{run_id}}, {{run_number}}, {{actor}}, {{repository}}.
+
+  commit_body:
+    required: false
+    description: Optional commit body (appended after commit message with a blank line). Supports template variables.
+    default: ''
 
   files:
     required: false
-    description: Files to add (space-separated). Defaults to all files (-A)
+    description: Files to add (space-separated, supports quoted paths and glob patterns). Defaults to all files (-A)
     default: '-A'
 
   branch:
@@ -58,9 +66,104 @@ inputs:
     description: Skip commit and push if there are no changes
     default: 'true'
 
+  skip_hooks:
+    required: false
+    description: Whether to skip git hooks (--no-verify) on commit
+    default: 'true'
+
   work_dir:
     required: false
     description: Working directory to execute git commands in. Defaults to the repository root
+
+  dry_run:
+    required: false
+    description: Show what would be committed without actually committing or pushing
+    default: 'false'
+
+  tag:
+    required: false
+    description: Optional tag to create on the commit
+    default: ''
+
+  tag_message:
+    required: false
+    description: Message for annotated tag (if empty, creates a lightweight tag)
+    default: ''
+
+  create_branch:
+    required: false
+    description: Create the target branch if it does not exist on the remote
+    default: 'false'
+
+  create_pr:
+    required: false
+    description: Whether to create a pull request after pushing (requires token)
+    default: 'false'
+
+  pr_title:
+    required: false
+    description: Title for the pull request (defaults to commit message). Supports template variables.
+    default: ''
+
+  pr_base_branch:
+    required: false
+    description: Base branch for the pull request (defaults to the repository default branch)
+    default: ''
+
+  pr_body:
+    required: false
+    description: Body for the pull request. Supports template variables.
+    default: ''
+
+  pr_labels:
+    required: false
+    description: Comma-separated list of labels to add to the pull request
+    default: ''
+
+  pr_draft:
+    required: false
+    description: Whether to create the pull request as a draft
+    default: 'false'
+
+  token:
+    required: false
+    description: GitHub token for authentication (used for push auth and PR creation)
+    default: ''
+
+  commits:
+    required: false
+    description: 'JSON array of commits to make [{message, files, body?}]. Each commit must declare its own files. Overrides commit_message/files if provided. Supports template variables.'
+    default: ''
+
+  amend:
+    required: false
+    description: Amend the last commit instead of creating a new one (cannot be used with commits array)
+    default: 'false'
+
+  retry_on_conflict:
+    required: false
+    description: Retry push with pull --rebase if it fails due to remote changes (only when force_push is false)
+    default: 'false'
+
+  max_retries:
+    required: false
+    description: Number of push retries after the initial attempt fails, when retry_on_conflict is enabled (total attempts = max_retries + 1)
+    default: '3'
+
+  exclude_files:
+    required: false
+    description: Files/patterns to exclude from staging (space-separated, supports quoted paths). Applied after git add.
+    default: ''
+
+  pathspec_from_file:
+    required: false
+    description: Path to a file containing the list of files to add (one per line). Takes precedence over files input.
+    default: ''
+
+  commit_timestamp:
+    required: false
+    description: Override commit date (sets GIT_AUTHOR_DATE and GIT_COMMITTER_DATE). Accepts any git-compatible date format.
+    default: ''
 
   commit_name:
     required: false
@@ -71,4 +174,14 @@ outputs:
   committed:
     description: Whether a commit was made (true/false)
   commit_sha:
-    description: The SHA of the commit (if committed)
+    description: The SHA of the last commit (if committed)
+  commit_shas:
+    description: JSON array of all commit SHAs
+  commit_url:
+    description: The GitHub URL of the last commit
+  changed_files:
+    description: JSON array of files changed across all commits
+  pr_url:
+    description: The URL of the created pull request (if create_pr was used)
+  pr_number:
+    description: The number of the created pull request (if create_pr was used)
